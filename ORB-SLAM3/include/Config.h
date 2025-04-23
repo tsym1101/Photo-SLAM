@@ -19,7 +19,11 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#ifndef _WIN32
 #include <unistd.h>
+#else
+#include <io.h>  // Windows での代替
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>

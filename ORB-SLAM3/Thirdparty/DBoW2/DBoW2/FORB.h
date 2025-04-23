@@ -10,6 +10,16 @@
 #ifndef __D_T_F_ORB__
 #define __D_T_F_ORB__
 
+#ifdef _WIN32
+#  ifdef DBOW2_EXPORTS
+#    define DBOW2_API __declspec(dllexport)
+#  else
+#    define DBOW2_API __declspec(dllimport)
+#  endif
+#else
+#  define DBOW2_API
+#endif
+
 #include <opencv2/core/core.hpp>
 #include <vector>
 #include <string>
@@ -28,7 +38,7 @@ public:
   /// Pointer to a single descriptor
   typedef const TDescriptor *pDescriptor;
   /// Descriptor length (in bytes)
-  static const int L;
+  DBOW2_API static const int L;
 
   /**
    * Calculates the mean value of a set of descriptors

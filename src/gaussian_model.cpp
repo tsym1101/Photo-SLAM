@@ -15,6 +15,10 @@
 
 #include "include/gaussian_model.h"
 
+#ifndef M_PI_2f32
+#define M_PI_2f32 1.57079632679489661923f
+#endif
+
 GaussianModel::GaussianModel(const int sh_degree)
     : active_sh_degree_(0), spatial_lr_scale_(0.0),
       lr_delay_steps_(0), lr_delay_mult_(1.0), max_steps_(1000000)
@@ -568,6 +572,7 @@ torch::Tensor GaussianModel::replaceTensorToOptimizer(torch::Tensor& tensor, int
 {
     auto& param = this->optimizer_->param_groups()[tensor_idx].params()[0];
     auto& state = optimizer_->state();
+    //auto key = c10::to_string(reinterpret_cast<uintptr_t>(param.unsafeGetTensorImpl()));
     auto key = c10::guts::to_string(param.unsafeGetTensorImpl());
     auto& stored_state = static_cast<torch::optim::AdamParamState&>(*state[key]);
     auto new_state = std::make_unique<torch::optim::AdamParamState>();
@@ -578,6 +583,7 @@ torch::Tensor GaussianModel::replaceTensorToOptimizer(torch::Tensor& tensor, int
 
     state.erase(key);
     param = tensor.requires_grad_();
+    //key = c10::to_string(reinterpret_cast<uintptr_t>(param.unsafeGetTensorImpl()));
     key = c10::guts::to_string(param.unsafeGetTensorImpl());
     state[key] = std::move(new_state);
 
@@ -595,6 +601,7 @@ void GaussianModel::prunePoints(torch::Tensor& mask)
     auto& state = this->optimizer_->state();
     for (int group_idx = 0; group_idx < 6; ++group_idx) {
         auto& param = param_groups[group_idx].params()[0];
+        //auto key = c10::to_string(reinterpret_cast<uintptr_t>(param.unsafeGetTensorImpl()));
         auto key = c10::guts::to_string(param.unsafeGetTensorImpl());
         if (state.find(key) != state.end()) {
             auto& stored_state = static_cast<torch::optim::AdamParamState&>(*state[key]);
@@ -606,6 +613,7 @@ void GaussianModel::prunePoints(torch::Tensor& mask)
 
             state.erase(key);
             param = param.index({valid_points_mask}).requires_grad_();
+            //key = c10::to_string(reinterpret_cast<uintptr_t>(param.unsafeGetTensorImpl()));
             key = c10::guts::to_string(param.unsafeGetTensorImpl());
             state[key] = std::move(new_state);
             optimizable_tensors[group_idx] = param;
@@ -667,6 +675,7 @@ void GaussianModel::densificationPostfix(
         assert(group.params().size() == 1);
         auto& extension_tensor = tensors_dict[group_idx];
         auto& param = group.params()[0];
+        //auto key = c10::to_string(reinterpret_cast<uintptr_t>(param.unsafeGetTensorImpl()));
         auto key = c10::guts::to_string(param.unsafeGetTensorImpl());
         if (state.find(key) != state.end()) {
             auto& stored_state = static_cast<torch::optim::AdamParamState&>(*state[key]);
@@ -678,6 +687,7 @@ void GaussianModel::densificationPostfix(
 
             state.erase(key);
             param = torch::cat({param, extension_tensor}, /*dim=*/0).requires_grad_();
+            //key = c10::to_string(reinterpret_cast<uintptr_t>(param.unsafeGetTensorImpl()));
             key = c10::guts::to_string(param.unsafeGetTensorImpl());
             state[key] = std::move(new_state);
 

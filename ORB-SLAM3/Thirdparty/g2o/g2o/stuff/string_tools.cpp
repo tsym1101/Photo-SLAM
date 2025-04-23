@@ -41,6 +41,33 @@
 #include <wordexp.h>
 #endif
 
+#ifdef _WIN32
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+
+int vasprintf(char** strp, const char* fmt, va_list ap) {
+    int len = _vscprintf(fmt, ap);
+    if (len == -1) {
+        return -1;
+    }
+
+    char* str = (char*)malloc(len + 1);
+    if (!str) {
+        return -1;
+    }
+
+    int result = vsprintf_s(str, len + 1, fmt, ap);
+    if (result == -1) {
+        free(str);
+        return -1;
+    }
+
+    *strp = str;
+    return result;
+}
+#endif
+
 namespace g2o {
 
 using namespace std;

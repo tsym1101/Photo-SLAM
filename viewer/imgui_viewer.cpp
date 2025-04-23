@@ -18,6 +18,10 @@
 
 #include "imgui_viewer.h"
 
+#ifndef M_PIf32
+#define M_PIf32 3.14159265358979323846f
+#endif
+
 static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "[ImGuiViewer]GLFW Error %d: %s\n", error, description);

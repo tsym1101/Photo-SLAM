@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <GL/glew.h>
+
 #include <torch/torch.h>
 
 #include "map_drawer.h"

@@ -44,3 +44,19 @@
 
 # ImGui .ini
 *imgui.ini
+
+# Build directories
+_build/
+**/_build/
+
+/bin/
+**/bin/
+
+_tmp/
+data/
+
+# Ignore all _build directories
+**/_build/
+
+MEMO.txt
+

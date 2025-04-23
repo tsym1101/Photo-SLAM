@@ -8,25 +8,43 @@ ENDIF()
 
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -O3")#  -Wall ")#
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}   -O3")# -Wall")#
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")# -march=native")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")# -march=native")
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -O3")#  -Wall ")#
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}   -O3")# -Wall")#
+# set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")# -march=native")
+# set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")# -march=native")
 
-# Check C++14 or C++0x support
-include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
-CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
-if(COMPILER_SUPPORTS_CXX14)
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
-   add_definitions(-DCOMPILEDWITHC11)
-   message(STATUS "Using flag -std=c++14.")
-elseif(COMPILER_SUPPORTS_CXX0X)
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-   add_definitions(-DCOMPILEDWITHC0X)
-   message(STATUS "Using flag -std=c++0x.")
+# Compiler flags setting (Branch for Windows/Linux)
+if(MSVC)
+  # Flags for Visual Studio
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2 /W3")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
 else()
-   message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++14 support. Please use a different C++ compiler.")
+  # Flags for GCC/Clang
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
+endif()
+
+# Check C++14 support
+if(MSVC)
+    set(CMAKE_CXX_STANDARD 14)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    set(CMAKE_CXX_EXTENSIONS OFF)
+    add_definitions(-DCOMPILEDWITHC11 -DNOMINMAX)
+else()
+    include(CheckCXXCompilerFlag)
+    CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
+    CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+    if(COMPILER_SUPPORTS_CXX14)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+        add_definitions(-DCOMPILEDWITHC11)
+        message(STATUS "Using flag -std=c++14.")
+    elseif(COMPILER_SUPPORTS_CXX0X)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+        add_definitions(-DCOMPILEDWITHC0X)
+        message(STATUS "Using flag -std=c++0x.")
+    else()
+        message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++14 support. Please use a different C++ compiler.")
+    endif()
 endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
@@ -114,14 +132,34 @@ include/Settings.h)
 
 add_subdirectory(Thirdparty/g2o)
 
-target_link_libraries(${PROJECT_NAME}
-${OpenCV_LIBS}
-${EIGEN3_LIBS}
-${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
-${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
--lboost_serialization
--lcrypto
-)
+# Library linking (Adjusted for Windows)
+if(WIN32)
+  find_package(Boost REQUIRED COMPONENTS serialization)
+  find_package(OpenSSL REQUIRED)
+
+  target_include_directories(${PROJECT_NAME} PUBLIC
+    ${EIGEN3_INCLUDE_DIR}
+    ${Boost_INCLUDE_DIRS}
+    ${OPENSSL_INCLUDE_DIR})
+
+  target_link_libraries(${PROJECT_NAME}
+    ${OpenCV_LIBS}
+    ${EIGEN3_LIBS}
+    ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/DBoW2$<$<CONFIG:Debug>:d>.lib
+    ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/g2o$<$<CONFIG:Debug>:d>.lib
+    ${Boost_LIBRARIES}
+    ${OPENSSL_CRYPTO_LIBRARY}
+  )
+else()
+  target_link_libraries(${PROJECT_NAME}
+    ${OpenCV_LIBS}
+    ${EIGEN3_LIBS}
+    ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+    ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+    -lboost_serialization
+    -lcrypto
+  )
+endif()
 
 # If RealSense SDK is found the library is added and its examples compiled
 if(realsense2_FOUND)
@@ -131,4 +169,8 @@ if(realsense2_FOUND)
     target_link_libraries(${PROJECT_NAME}
     ${realsense2_LIBRARY}
     )
+endif()
+
+if(MSVC)
+    set_target_properties(ORB_SLAM3 PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif()

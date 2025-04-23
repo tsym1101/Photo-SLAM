@@ -61,7 +61,11 @@ SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
 
 # activate warnings !!!
 SET(g2o_C_FLAGS "${g2o_C_FLAGS} -Wall -W")
-SET(g2o_CXX_FLAGS "${g2o_CXX_FLAGS} -Wall -W")
+if(MSVC)
+  set(g2o_CXX_FLAGS "${g2o_CXX_FLAGS} /W4")
+else()
+  set(g2o_CXX_FLAGS "${g2o_CXX_FLAGS} -Wall -W")
+endif()
 
 # specifying compiler flags
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${g2o_CXX_FLAGS}")
@@ -176,3 +180,10 @@ g2o/stuff/string_tools.cpp
 g2o/stuff/property.cpp       
 g2o/stuff/property.h       
 )
+
+if(WIN32)
+  add_definitions(-DG2O_SHARED_LIBS -DG2O_EXPORTS)
+  if(MSVC)
+    set_target_properties(g2o PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+  endif()
+endif()

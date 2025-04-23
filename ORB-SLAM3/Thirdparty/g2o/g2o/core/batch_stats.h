@@ -31,6 +31,16 @@
 #include <vector>
 
 
+#ifdef _WIN32
+#  ifdef G2O_EXPORTS
+#    define G2O_CORE_API __declspec(dllexport)
+#  else
+#    define G2O_CORE_API __declspec(dllimport)
+#  endif
+#else
+#  define G2O_CORE_API
+#endif
+
 namespace g2o {
 
   /**
@@ -72,7 +82,7 @@ namespace g2o {
     static G2OBatchStatistics* globalStats() {return _globalStats;}
     static void setGlobalStats(G2OBatchStatistics* b);
     protected:
-    static G2OBatchStatistics* _globalStats;
+    G2O_CORE_API static G2OBatchStatistics* _globalStats;
   };
 
    std::ostream& operator<<(std::ostream&, const G2OBatchStatistics&);

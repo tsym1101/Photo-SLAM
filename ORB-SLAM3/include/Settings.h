@@ -25,7 +25,14 @@
 
 #include "CameraModels/GeometricCamera.h"
 
+#ifndef _WIN32
 #include <unistd.h>
+#else
+// #define NOMINMAX
+#include <windows.h>
+#define usleep(x) Sleep((x)/1000)
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
